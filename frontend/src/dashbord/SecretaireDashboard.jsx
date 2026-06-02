@@ -11,9 +11,13 @@ import {
   PhoneCall,
   RefreshCw,
   Search,
+  UserCheck,
+  Users,
 } from "lucide-react";
-import { agendaAPI, doctorsAPI, secretaryAppointmentsAPI, usersAPI } from "../../api";
+import { agendaAPI, doctorsAPI, patientsAPI, secretaryAppointmentsAPI, usersAPI } from "../../api";
 import Modal from "../components/Modal";
+import PatientsManager from "../components/patients/PatientsManager";
+import FileAttenteManager from "../components/queue/FileAttenteManager";
 
 const EMPTY_EDIT = {
   statut: "",
@@ -29,6 +33,8 @@ const EMPTY_BOOKING = {
   ophtalmologue_id: "",
   date: "",
   creneau_id: "",
+  patient_id: "",
+  patient_search: "",
   nom_patient: "",
   prenom_patient: "",
   telephone: "",
@@ -96,11 +102,14 @@ export default function SecretaireDashboard() {
   const [bookingError, setBookingError] = useState("");
   const [bookingSuccess, setBookingSuccess] = useState("");
   const [doctors, setDoctors] = useState([]);
+  const [patients, setPatients] = useState([]);
+  const [selectedPatient, setSelectedPatient] = useState(null);
   const [slots, setSlots] = useState([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [cancelNote, setCancelNote] = useState("");
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState("rdv"); // "rdv" | "patients" | "queue"
 
   const fetchDoctors = async () => {
     try {
@@ -110,6 +119,24 @@ export default function SecretaireDashboard() {
       setDoctors(Array.isArray(data) ? data : []);
     } catch (err) {
       setBookingError(err.message || "Impossible de charger les médecins.");
+    }
+  };
+
+  const fetchPatients = async () => {
+    try {
+      const data = await patientsAPI.getMy();
+      setPatients(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setBookingError(err.message || "Impossible de charger les patients.");
+    }
+  };
+
+  const getCurrentCabinetId = () => {
+    try {
+      const stored = localStorage.getItem("user");
+      return stored ? JSON.parse(stored)?.cabinet_id : undefined;
+    } catch {
+      return undefined;
     }
   };
 
@@ -209,21 +236,58 @@ export default function SecretaireDashboard() {
 
   const openBooking = () => {
     setBookingForm(EMPTY_BOOKING);
+    setSelectedPatient(null);
     setSlots([]);
     setBookingError("");
     setBookingSuccess("");
     setBookingOpen(true);
     if (doctors.length === 0) fetchDoctors();
+    fetchPatients();
   };
 
   const handleBookingChange = (event) => {
     const { name, value } = event.target;
-    setBookingForm((prev) => ({
-      ...prev,
-      [name]: value,
-      ...(name === "ophtalmologue_id" || name === "date" ? { creneau_id: "" } : {}),
-    }));
+
+    setBookingForm((prev) => {
+      if (name === "patient_id") {
+        const selected = patients.find((patient) => String(patient.id) === String(value));
+        setSelectedPatient(selected || null);
+        return {
+          ...prev,
+          patient_id: value,
+          nom_patient: selected?.nom || "",
+          prenom_patient: selected?.prenom || "",
+          telephone: selected?.telephone || "",
+        };
+      }
+
+      if (name === "ophtalmologue_id" || name === "date") {
+        return {
+          ...prev,
+          [name]: value,
+          creneau_id: "",
+        };
+      }
+
+      return {
+        ...prev,
+        [name]: value,
+      };
+    });
   };
+
+  const filteredPatients = useMemo(() => {
+    const term = bookingForm.patient_search.trim().toLowerCase();
+    if (!term) return patients;
+
+    return patients.filter((patient) => {
+      const haystack = [patient.nom, patient.prenom, patient.telephone, patient.email || patient.email_contact]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(term);
+    });
+  }, [bookingForm.patient_search, patients]);
 
   useEffect(() => {
     const loadSlots = async () => {
@@ -253,23 +317,54 @@ export default function SecretaireDashboard() {
     setBookingError("");
     setBookingSuccess("");
 
+    if (!bookingForm.ophtalmologue_id) {
+      setBookingError("Sélectionnez un ophtalmologue.");
+      return;
+    }
+
+    if (!bookingForm.patient_id) {
+      setBookingError("Sélectionnez un patient existant.");
+      return;
+    }
+
     if (!bookingForm.creneau_id) {
       setBookingError("Sélectionnez un créneau disponible.");
       return;
     }
 
+    if (!selectedPatient || String(selectedPatient.id) !== String(bookingForm.patient_id)) {
+      setBookingError("Sélectionnez un patient existant valide.");
+      return;
+    }
+
+    const email = (selectedPatient.email || selectedPatient.email_contact || "").trim();
+    if (!email) {
+      setBookingError("Ce patient n’a pas d’email. Veuillez compléter sa fiche patient avant de créer un rendez-vous.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setBookingError("Email du patient invalide.");
+      return;
+    }
+
+    const payload = {
+      creneau_id: bookingForm.creneau_id,
+      ophtalmologue_id: bookingForm.ophtalmologue_id,
+      patient_id: selectedPatient.id,
+      nom_patient: selectedPatient.nom,
+      prenom_patient: selectedPatient.prenom,
+      telephone: selectedPatient.telephone,
+      email_contact: email,
+      date: bookingForm.date,
+      motif: bookingForm.motif.trim() || null,
+      source: bookingForm.source?.trim() || "cabinet",
+    };
+
+    console.log("Payload RDV envoyé:", payload);
+
     setSubmitting(true);
     try {
-      await agendaAPI.createAppointment({
-        creneau_id: bookingForm.creneau_id,
-        ophtalmologue_id: bookingForm.ophtalmologue_id,
-        nom_patient: bookingForm.nom_patient.trim(),
-        prenom_patient: bookingForm.prenom_patient.trim(),
-        telephone: bookingForm.telephone.trim(),
-        email_contact: bookingForm.email_contact.trim(),
-        motif: bookingForm.motif.trim() || null,
-        source: bookingForm.source,
-      });
+      await agendaAPI.createAppointment(payload);
 
       setBookingSuccess("Rendez-vous créé avec succès.");
       setBookingForm(EMPTY_BOOKING);
@@ -377,7 +472,32 @@ export default function SecretaireDashboard() {
       </header>
 
       <main className="px-5 py-6 lg:px-8">
-        <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-7">
+        <div className="mb-5 rounded-xl border border-[#dde3df] bg-white p-4">
+          <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-4">
+            {[
+              { id: "rdv", label: "Rendez-vous", icon: CalendarClock },
+              { id: "patients", label: "Patients", icon: UserCheck },
+              { id: "queue", label: "File d'attente", icon: Users },
+            ].map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setActiveTab(id)}
+                className={`flex items-center gap-2 flex-1 py-2 px-3 rounded-lg text-sm font-medium transition ${
+                  activeTab === id
+                    ? "bg-white text-blue-700 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                <Icon size={15} />
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {activeTab === "rdv" && (
+            <>
+              <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-7">
           {[
             ["Total", stats.total],
             ["En attente", stats.waiting],
@@ -515,6 +635,12 @@ export default function SecretaireDashboard() {
             </table>
           </div>
         </section>
+      </>
+          )}
+
+          {activeTab === "patients" && <PatientsManager />}
+          {activeTab === "queue" && <FileAttenteManager />}
+        </div>
       </main>
 
       {/* ── Modal Modifier ── */}
@@ -693,50 +819,36 @@ export default function SecretaireDashboard() {
             </select>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-[#4f5d57]">Nom</label>
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-[#4f5d57]">Patient</label>
+            <div className="space-y-2">
               <input
-                name="nom_patient"
-                value={bookingForm.nom_patient}
+                type="text"
+                name="patient_search"
+                value={bookingForm.patient_search}
+                onChange={handleBookingChange}
+                placeholder="Rechercher nom, prénom, téléphone"
+                className="w-full rounded-lg border border-[#cfd8d3] px-3 py-2 text-sm outline-none focus:border-[#2f4f4f]"
+              />
+              <select
+                name="patient_id"
+                value={bookingForm.patient_id}
                 onChange={handleBookingChange}
                 required
                 className="w-full rounded-lg border border-[#cfd8d3] px-3 py-2 text-sm outline-none focus:border-[#2f4f4f]"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-[#4f5d57]">Prénom</label>
-              <input
-                name="prenom_patient"
-                value={bookingForm.prenom_patient}
-                onChange={handleBookingChange}
-                required
-                className="w-full rounded-lg border border-[#cfd8d3] px-3 py-2 text-sm outline-none focus:border-[#2f4f4f]"
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-[#4f5d57]">Téléphone</label>
-              <input
-                name="telephone"
-                value={bookingForm.telephone}
-                onChange={handleBookingChange}
-                required
-                className="w-full rounded-lg border border-[#cfd8d3] px-3 py-2 text-sm outline-none focus:border-[#2f4f4f]"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-[#4f5d57]">Email</label>
-              <input
-                type="email"
-                name="email_contact"
-                value={bookingForm.email_contact}
-                onChange={handleBookingChange}
-                required
-                className="w-full rounded-lg border border-[#cfd8d3] px-3 py-2 text-sm outline-none focus:border-[#2f4f4f]"
-              />
+              >
+                <option value="">Sélectionner un patient</option>
+                {filteredPatients.length === 0 ? (
+                  <option value="" disabled>Aucun patient trouvé</option>
+                ) : (
+                  filteredPatients.map((patient) => (
+                    <option key={patient.id} value={patient.id}>
+                      {patient.nom} {patient.prenom}
+                      {patient.telephone ? ` — ${patient.telephone}` : ""}
+                    </option>
+                  ))
+                )}
+              </select>
             </div>
           </div>
 

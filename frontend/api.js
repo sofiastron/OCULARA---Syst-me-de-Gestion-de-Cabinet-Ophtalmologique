@@ -5,12 +5,40 @@ const getHeaders = () => ({
   Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
 });
 
+const formatApiError = (data) => {
+  if (!data) return "Erreur API";
+
+  if (typeof data.detail === "string") {
+    return data.detail.replace(/^Value error,\s*/i, "");
+  }
+
+  if (Array.isArray(data.detail) && data.detail.length > 0) {
+    const first = data.detail[0];
+    if (typeof first === "string") {
+      return first.replace(/^Value error,\s*/i, "");
+    }
+    if (first && typeof first === "object" && first.msg) {
+      return String(first.msg).replace(/^Value error,\s*/i, "");
+    }
+    return data.detail.map((item) => {
+      if (typeof item === "string") return item;
+      if (item && typeof item === "object" && item.msg) return String(item.msg);
+      return JSON.stringify(item);
+    }).join("; ");
+  }
+
+  if (typeof data === "string") return data;
+  if (data.detail) return JSON.stringify(data.detail);
+
+  return "Erreur API";
+};
+
 const requestJson = async (url, options = {}) => {
   const response = await fetch(url, options);
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.detail || "Erreur API");
+    throw new Error(formatApiError(data));
   }
 
   return data;
@@ -192,4 +220,73 @@ export const plagesAPI = {
       method: "DELETE",
       headers: getHeaders(),
     }).then((r) => r.json()),
+};
+
+// ─── Patients (Sprint 3) ──────────────────────────────────────
+export const patientsAPI = {
+  getMy: (search = "") => {
+    const url = search
+      ? `${BASE_URL}/patients/my-patients?search=${encodeURIComponent(search)}`
+      : `${BASE_URL}/patients/my-patients`;
+    return requestJson(url, { headers: getHeaders() });
+  },
+
+  getByCabinet: (cabinetId, search = "") => {
+    const url = search
+      ? `${BASE_URL}/patients/cabinet/${cabinetId}?search=${encodeURIComponent(search)}`
+      : `${BASE_URL}/patients/cabinet/${cabinetId}`;
+    return requestJson(url, { headers: getHeaders() });
+  },
+
+  getById: (id) =>
+    requestJson(`${BASE_URL}/patients/${id}`, { headers: getHeaders() }),
+
+  create: (data) =>
+    requestJson(`${BASE_URL}/patients/add`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    }),
+
+  update: (id, data) =>
+    requestJson(`${BASE_URL}/patients/${id}`, {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id) =>
+    requestJson(`${BASE_URL}/patients/${id}`, {
+      method: "DELETE",
+      headers: getHeaders(),
+    }),
+};
+
+// ─── File d'attente (Sprint 3) ────────────────────────────────
+export const queueAPI = {
+  get: (includeTermine = false) =>
+    requestJson(
+      `${BASE_URL}/queue/?include_termine=${includeTermine}`,
+      { headers: getHeaders() }
+    ),
+
+  add: (data) =>
+    requestJson(`${BASE_URL}/queue/`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    }),
+
+  update: (id, data) =>
+    requestJson(`${BASE_URL}/queue/${id}`, {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    }),
+
+  remove: (id) =>
+    requestJson(`${BASE_URL}/queue/${id}`, {
+      method: "DELETE",
+      headers: getHeaders(),
+    }),
 };
