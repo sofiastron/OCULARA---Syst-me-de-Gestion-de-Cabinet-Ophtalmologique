@@ -8,7 +8,7 @@ import ProtectedRoute from "./auth/ProtectedRoute";
 import Login from "./auth/Login";
 import AdminDashboard from "./dashbord/AdminDashboard";
 import OphthalmologistDashboard from "./dashbord/OphthalmologistDashboard";
-// import SecretaireDashboard from "./dashbord/SecretaireDashboard";
+import SecretaireDashboard from "./dashbord/SecretaireDashboard";
 // import OrthoptisteDashboard from "./dashbord/OrthoptisteDashboard";
 
 export default function App() {
@@ -43,14 +43,14 @@ export default function App() {
         />
 
         {/* ── Secrétaire ────────────────────────────── */}
-        {/* <Route
+        <Route
           path="/secretaire"
           element={
             <ProtectedRoute requiredRole="secretaire">
               <SecretaireDashboard />
             </ProtectedRoute>
           }
-        /> */}
+        />
 
         {/* ── Orthoptiste ───────────────────────────── */}
         {/* <Route

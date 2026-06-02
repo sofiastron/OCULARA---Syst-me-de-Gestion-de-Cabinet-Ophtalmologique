@@ -1,0 +1,117 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Inter:wght@300;400;500;600&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+:root{--abyss:#092C56;--lapis:#225688;--slate:#668CA9;--glacier:#A9CBE0;--quartz:#F0F5F4}
+@layer base{*{box-sizing:border-box}html{scroll-behavior:smooth}body{font-family:'Inter',sans-serif;background:#F0F5F4;color:#092C56;-webkit-font-smoothing:antialiased}h1,h2,h3,h4,h5{font-family:'DM Sans',sans-serif;color:#092C56}}
+@layer components{
+.page-container{max-width:100rem;margin:0 auto;padding:2rem 1.5rem}
+.glass-card{background:white;border-radius:20px;box-shadow:0 8px 32px rgba(9,44,86,.08);border:1px solid rgba(255,255,255,.8)}
+.btn-primary{display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.5rem;background:#225688;color:white;border-radius:14px;font-weight:500;font-size:.875rem;border:none;cursor:pointer;transition:all .2s ease;box-shadow:0 2px 8px rgba(34,86,136,.25);text-decoration:none;outline:none}
+.btn-primary:hover{background:#092C56;box-shadow:0 4px 16px rgba(9,44,86,.3);transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-secondary{display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.5rem;background:white;color:#225688;border-radius:14px;font-weight:500;font-size:.875rem;border:1.5px solid #A9CBE0;cursor:pointer;transition:all .2s ease;text-decoration:none;outline:none}
+.btn-secondary:hover{background:#F0F5F4;border-color:#225688}
+.btn-danger{display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.5rem;background:#fff1f1;color:#dc2626;border-radius:14px;font-weight:500;font-size:.875rem;border:1.5px solid #fecaca;cursor:pointer;transition:all .2s ease;text-decoration:none;outline:none}
+.btn-danger:hover{background:#fee2e2}
+.form-input{width:100%;padding:.75rem 1rem;border-radius:14px;border:1.5px solid #A9CBE0;background:white;font-size:.875rem;font-weight:500;color:#092C56;transition:all .2s ease;outline:none}
+.form-input::placeholder{color:#668CA9}
+.form-input:focus{border-color:#225688;box-shadow:0 0 0 3px rgba(34,86,136,.15)}
+.form-label{display:block;font-size:.7rem;font-weight:600;color:#668CA9;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.375rem}
+.slot-available{padding:.625rem .75rem;border-radius:14px;font-size:.875rem;font-weight:600;background:white;color:#225688;border:1.5px solid #A9CBE0;cursor:pointer;transition:all .15s ease;outline:none}
+.slot-available:hover{background:#A9CBE0;color:#092C56;border-color:#225688}
+.slot-selected{padding:.625rem .75rem;border-radius:14px;font-size:.875rem;font-weight:600;background:#225688;color:white;border:1.5px solid #225688;box-shadow:0 4px 12px rgba(34,86,136,.3)}
+.slot-taken{padding:.625rem .75rem;border-radius:14px;font-size:.875rem;font-weight:500;background:#F0F5F4;color:#668CA9;border:1.5px solid transparent;cursor:not-allowed;text-decoration:line-through;opacity:.5}
+.alert-success{display:flex;align-items:flex-start;gap:.75rem;padding:1rem;background:#f0fdf4;border:1.5px solid #86efac;border-radius:14px;color:#15803d;font-size:.875rem}
+.alert-error{display:flex;align-items:flex-start;gap:.75rem;padding:1rem;background:#fef2f2;border:1.5px solid #fecaca;border-radius:14px;color:#dc2626;font-size:.875rem}
+.alert-info{display:flex;align-items:flex-start;gap:.75rem;padding:1rem;background:#F0F5F4;border:1.5px solid #A9CBE0;border-radius:14px;color:#225688;font-size:.875rem}
+.page-title{font-family:'DM Sans',sans-serif;font-size:clamp(1.5rem,4vw,1.875rem);font-weight:700;color:#092C56;margin-bottom:.5rem}
+.page-subtitle{color:#668CA9;margin-bottom:2rem;font-size:.9375rem}
+.card-grid{display:grid;gap:1.25rem;grid-template-columns:1fr}
+.breadcrumb{display:flex;flex-wrap:wrap;align-items:center;gap:.375rem;font-size:.875rem;color:#668CA9;margin-bottom:1.5rem}
+.breadcrumb a{color:#225688;text-decoration:none}
+.breadcrumb a:hover{color:#092C56;text-decoration:underline}
+.breadcrumb span{color:#668CA9;font-weight:500}
+.summary-box{background:white;border-radius:20px;box-shadow:0 8px 32px rgba(9,44,86,.08);border:1px solid rgba(255,255,255,.8);padding:5rem;margin-bottom:1.5rem;display:grid;grid-template-columns:1fr;gap:2.5rem 3rem}.summary-box dd{overflow-wrap:anywhere;}
+
+  .summary-box dt{
+    font-weight:600;
+    color:#668CA9;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    font-size:.7rem;
+    margin-bottom:.25rem;
+  }
+  .summary-box dd{
+    color:#092C56;
+    font-weight:600;
+    margin-bottom:.5rem;
+    font-size:.85rem;
+  }
+.contact-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  width: 100%;
+  min-height:auto;
+  padding: 24px;
+  border-radius: 18px;
+  background: #f7fafc;
+  border: 1px solid #dce7f2;
+  box-sizing: border-box;
+
+}
+
+.contact-card .info-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+  .email-text {
+    margin-top: 8px;
+    margin-bottom: 0;
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: #0B2E4F;
+    white-space: normal;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    overflow: visible;
+  }
+
+
+.email-title{
+  font-size:0.75rem;
+  font-weight:500;
+  color:#668CA9; /* grey/blue */
+  text-transform:uppercase;
+  margin:0;
+  line-height:1.2;
+}
+.email-address{
+  font-size:18px;
+  font-weight:500;
+  color:#0B2E4F;
+  line-height:1.5;
+  word-break:break-word;
+  overflow-wrap:anywhere;
+  margin:0;
+}
+}
+@media(min-width:640px){.card-grid{grid-template-columns:repeat(2,1fr);gap:1.5rem}.summary-box{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1024px){.card-grid{grid-template-columns:repeat(3,1fr)}}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#A9CBE0;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#668CA9}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes floatSlow{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.animate-fade-in-up{animation:fadeInUp .7s ease both}
+.animation-delay-100{animation-delay:.1s}.animation-delay-200{animation-delay:.2s}.animation-delay-300{animation-delay:.3s}.animation-delay-400{animation-delay:.4s}.animation-delay-500{animation-delay:.5s}.animation-delay-600{animation-delay:.6s}

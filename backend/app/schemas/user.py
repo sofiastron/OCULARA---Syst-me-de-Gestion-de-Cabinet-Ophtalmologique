@@ -28,6 +28,6 @@ class UserUpdate(BaseModel):
     prenom: Optional[str] = None
     email: Optional[EmailStr] = None
     password: Optional[str] = None
-    role: Optional[str] = None          # ← était manquant
+    role: Optional[str] = None          
     specialite: Optional[str] = None
     cabinet_id: Optional[str] = None

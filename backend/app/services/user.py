@@ -50,7 +50,6 @@ def update_user(db: Session, user_id: str, user: UserUpdate):
     if not db_user:
         return None
 
-    # Utiliser hasattr pour éviter AttributeError si le champ n'existe pas
     if hasattr(user, 'nom') and user.nom is not None:
         db_user.nom = user.nom
     if hasattr(user, 'prenom') and user.prenom is not None:
