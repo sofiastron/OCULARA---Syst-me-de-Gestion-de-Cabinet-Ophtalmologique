@@ -86,6 +86,12 @@ class Patient(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     cabinet = relationship("CabinetMedical", back_populates="patients")
+    dossier = relationship(
+        "DossierPatient",
+        back_populates="patient",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
 
 from pydantic import BaseModel, ConfigDict, EmailStr
 from typing import Optional
@@ -184,3 +190,50 @@ class RendezVous(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     creneau = relationship("Creneau", back_populates="rendez_vous")
+
+
+# =====================================================
+# DOSSIER MÉDICAL PATIENT (extension sprint 3)
+# =====================================================
+
+class DossierPatient(Base):
+    __tablename__ = "dossiers_patients"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    patient_id = Column(String, ForeignKey("patients.id"), nullable=False, unique=True)
+    cabinet_id = Column(String, ForeignKey("cabinets.id"), nullable=True)
+
+    date_naissance = Column(Date, nullable=True)
+    email = Column(String, nullable=True)
+    mutuelle = Column(String, nullable=True)
+    antecedents = Column(String, nullable=True)
+    numero_dossier = Column(String, unique=True, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    patient = relationship("Patient", back_populates="dossier")
+
+
+# =====================================================
+# FILE D'ATTENTE (sprint 3)
+# =====================================================
+
+class FileAttente(Base):
+    __tablename__ = "file_attente"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    patient_id = Column(String, ForeignKey("patients.id"), nullable=False)
+    rendez_vous_id = Column(String, ForeignKey("appointments.id"), nullable=True)
+    cabinet_id = Column(String, ForeignKey("cabinets.id"), nullable=False)
+
+    statut = Column(String(30), default="EN_ATTENTE")
+    # EN_ATTENTE | AVEC_ORTHOPTISTE | AVEC_OPHTALMOLOGUE | TERMINE
+
+    ordre = Column(Integer, nullable=True)
+    heure_arrivee = Column(DateTime, default=datetime.utcnow)
+    heure_appel = Column(DateTime, nullable=True)
+    notes = Column(String, nullable=True)
+
+    patient = relationship("Patient", backref="file_entrees")
+    rendez_vous = relationship("RendezVous", backref="file_entree", uselist=False)

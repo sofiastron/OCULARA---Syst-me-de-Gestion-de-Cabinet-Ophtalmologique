@@ -7,6 +7,7 @@ from app.models import Base
 from app.routers import user, cabinet, patient, doctors, secretary
 from app.routers.appointments import router as agenda_router
 from app.routers.gestion_rdv import router as gestion_rdv_router
+from app.routers.queue import router as queue_router
 
 app = FastAPI()
 
@@ -33,6 +34,7 @@ app.include_router(patient.router)
 app.include_router(agenda_router)
 app.include_router(gestion_rdv_router)
 app.include_router(secretary.router)
+app.include_router(queue_router)
 
 
 @app.get("/")
