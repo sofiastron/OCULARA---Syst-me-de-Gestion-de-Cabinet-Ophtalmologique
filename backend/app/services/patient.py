@@ -36,6 +36,7 @@ def create_patient(db: Session, data: PatientCreate):
         prenom=data.prenom,
         telephone=data.telephone,
         adresse=data.adresse,
+        email=data.email,
         sexe=data.sexe,
         cabinet_id=data.cabinet_id,
     )
@@ -86,6 +87,9 @@ def update_patient(db: Session, patient_id: str, data: PatientUpdate):
         val = getattr(data, field, None)
         if val is not None:
             setattr(patient, field, val)
+    # allow updating patient.email directly
+    if getattr(data, "email", None) is not None:
+        patient.email = data.email
 
     dossier_fields = ["date_naissance", "email", "mutuelle", "antecedents"]
     dossier = db.query(DossierPatient).filter(DossierPatient.patient_id == patient_id).first()
@@ -94,6 +98,10 @@ def update_patient(db: Session, patient_id: str, data: PatientUpdate):
             val = getattr(data, field, None)
             if val is not None:
                 setattr(dossier, field, val)
+
+    # keep dossier email in sync if provided
+    if getattr(data, "email", None) is not None and dossier:
+        dossier.email = data.email
 
     db.commit()
     db.refresh(patient)
@@ -117,11 +125,17 @@ def get_patient_detail(db: Session, patient_id: str):
     dossier = db.query(DossierPatient).filter(DossierPatient.patient_id == patient_id).first()
 
     if dossier:
-        patient.date_naissance = dossier.date_naissance
-        patient.email = dossier.email
-        patient.mutuelle = dossier.mutuelle
-        patient.antecedents = dossier.antecedents
-        patient.numero_dossier = dossier.numero_dossier
+        # only populate missing fields from dossier to avoid overwriting patient-level email
+        if not getattr(patient, "date_naissance", None):
+            patient.date_naissance = dossier.date_naissance
+        if not getattr(patient, "email", None):
+            patient.email = dossier.email
+        if not getattr(patient, "mutuelle", None):
+            patient.mutuelle = dossier.mutuelle
+        if not getattr(patient, "antecedents", None):
+            patient.antecedents = dossier.antecedents
+        if not getattr(patient, "numero_dossier", None):
+            patient.numero_dossier = dossier.numero_dossier
     return patient
 
 

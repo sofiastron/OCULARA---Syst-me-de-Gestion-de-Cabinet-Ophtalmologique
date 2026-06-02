@@ -1,5 +1,5 @@
 # app/schemas/appointment.py
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 from typing import Optional
 from datetime import date as DateType, time as TimeType, datetime
 
@@ -61,19 +61,38 @@ class CalendarStatusResponse(BaseModel):
 class AppointmentCreate(BaseModel):
     creneau_id: str
     ophtalmologue_id: str
-    nom_patient: str
-    prenom_patient: str
-    telephone: str
-    email_contact: EmailStr
+    patient_id: Optional[str] = None
+    date: Optional[DateType] = None
+    nom_patient: Optional[str] = None
+    prenom_patient: Optional[str] = None
+    telephone: Optional[str] = None
+    email_contact: Optional[EmailStr] = None
     motif: Optional[str] = None
     source: Optional[str] = "web"
 
-    @field_validator("nom_patient", "prenom_patient", "telephone")
+    @field_validator("nom_patient", "prenom_patient", "telephone", mode="before")
     @classmethod
-    def non_vide(cls, v: str) -> str:
-        if not v or not v.strip():
-            raise ValueError("Ce champ est obligatoire et ne peut pas être vide")
-        return v.strip()
+    def strip_text(cls, v):
+        if v is None:
+            return v
+        if not str(v).strip():
+            raise ValueError("Ce champ ne peut pas être vide")
+        return str(v).strip()
+
+    @field_validator("email_contact", mode="before")
+    @classmethod
+    def strip_email(cls, v):
+        return str(v).strip() if v is not None else v
+
+    @model_validator(mode="after")
+    @classmethod
+    def require_contact_info(cls, values):
+        if values.patient_id is None:
+            if not values.nom_patient or not values.prenom_patient or not values.telephone or not values.email_contact:
+                raise ValueError(
+                    "Pour un rendez-vous sans patient existant, les champs nom_patient, prenom_patient, telephone et email_contact sont obligatoires"
+                )
+        return values
 
 
 class AppointmentResponse(BaseModel):

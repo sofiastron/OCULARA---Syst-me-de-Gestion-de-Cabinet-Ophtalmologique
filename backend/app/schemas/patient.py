@@ -81,6 +81,7 @@ class PatientResponse(BaseModel):
     telephone: Optional[str]
     adresse: Optional[str]
     sexe: Optional[str]
+    email: Optional[EmailStr]
     cabinet_id: str
     created_at: Optional[datetime] = None
 

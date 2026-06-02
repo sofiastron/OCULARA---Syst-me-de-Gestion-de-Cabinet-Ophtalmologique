@@ -37,6 +37,7 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
             "prenom": user.prenom,
             "email": user.email,
             "role": user.role,
+            "cabinet_id": user.cabinet_id,
         },
     }
 

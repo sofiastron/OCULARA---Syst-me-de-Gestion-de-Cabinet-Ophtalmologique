@@ -6,7 +6,7 @@ import calendar
 import uuid
 
 from app.database import get_db
-from app.models import Creneau, RendezVous, PlageHoraire
+from app.models import Creneau, RendezVous, PlageHoraire, Patient, DossierPatient
 from app.schemas.appointment import (
     AppointmentCreate,
     AppointmentResponse,
@@ -170,18 +170,54 @@ def create_appointment(
             detail="Un rendez-vous existe déjà sur ce créneau"
         )
 
+    if payload.date and payload.date != creneau.date:
+        raise HTTPException(
+            status_code=400,
+            detail="La date fournie ne correspond pas à la date du créneau"
+        )
+
+    patient = None
+    dossier = None
+    nom_patient = payload.nom_patient
+    prenom_patient = payload.prenom_patient
+    telephone = payload.telephone
+    email_contact = payload.email_contact
+
+    if payload.patient_id:
+        patient = db.query(Patient).filter(Patient.id == payload.patient_id).first()
+        if not patient:
+            raise HTTPException(
+                status_code=404,
+                detail="Patient introuvable"
+            )
+
+        nom_patient = nom_patient or patient.nom
+        prenom_patient = prenom_patient or patient.prenom
+        telephone = telephone or patient.telephone
+
+        if email_contact is None:
+            # prefer email stored on Patient, fallback to DossierPatient
+            if getattr(patient, "email", None):
+                email_contact = patient.email
+            else:
+                dossier = db.query(DossierPatient).filter(
+                    DossierPatient.patient_id == patient.id
+                ).first()
+                if dossier and dossier.email:
+                    email_contact = dossier.email
+
     rdv_datetime = datetime.combine(creneau.date, creneau.heure_debut)
     token_expires = rdv_datetime - timedelta(hours=24)
-
 
     rdv = RendezVous(
         id=str(uuid.uuid4()),
         creneau_id=payload.creneau_id,
         ophtalmologue_id=payload.ophtalmologue_id,
-        nom_patient=payload.nom_patient,
-        prenom_patient=payload.prenom_patient,
-        telephone=payload.telephone,
-        email_contact=str(payload.email_contact),
+        patient_id=payload.patient_id,
+        nom_patient=nom_patient,
+        prenom_patient=prenom_patient,
+        telephone=telephone,
+        email_contact=str(email_contact) if email_contact else None,
         motif=payload.motif,
         source=payload.source or "web",
         statut="EN_ATTENTE",
@@ -205,17 +241,20 @@ def create_appointment(
                 CabinetMedical.id == str(medecin.cabinet_id)
             ).first()
 
-        send_confirmation_email(
-            to_email=rdv.email_contact,
-            nom_patient=rdv.nom_patient,
-            prenom_patient=rdv.prenom_patient,
-            date_rdv=str(creneau.date),
-            heure_rdv=str(creneau.heure_debut)[:5],
-            medecin_nom=medecin_nom,
-            token_modification=rdv.token_modification,
-            cancel_token=rdv.cancel_token,
-            cabinet_nom=cabinet.nom if cabinet else None,
-        )
+        if rdv.email_contact:
+            send_confirmation_email(
+                to_email=rdv.email_contact,
+                nom_patient=rdv.nom_patient,
+                prenom_patient=rdv.prenom_patient,
+                date_rdv=str(creneau.date),
+                heure_rdv=str(creneau.heure_debut)[:5],
+                medecin_nom=medecin_nom,
+                token_modification=rdv.token_modification,
+                cancel_token=rdv.cancel_token,
+                cabinet_nom=cabinet.nom if cabinet else None,
+            )
+        else:
+            print("[EMAIL] Aucun email de contact disponible — confirmation non envoyée")
     except Exception as e:
         # L'email ne doit PAS faire echouer la reservation
         print(f"[EMAIL] Erreur envoi confirmation : {e}")

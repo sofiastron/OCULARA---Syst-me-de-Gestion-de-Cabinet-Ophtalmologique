@@ -78,6 +78,7 @@ class Patient(Base):
 
     telephone = Column(String)
     adresse = Column(String)
+    email = Column(String, nullable=True)
 
     sexe = Column(String)
 
