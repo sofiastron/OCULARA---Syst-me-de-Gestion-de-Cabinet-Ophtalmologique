@@ -1,15 +1,28 @@
 # app/main.py
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import engine
 from app.models import Base
+
 from app.routers import user, cabinet, patient, doctors, secretary
 from app.routers.appointments import router as agenda_router
 from app.routers.gestion_rdv import router as gestion_rdv_router
 from app.routers.queue import router as queue_router
+from app.routers.examen_router import router as examen_router
 
-app = FastAPI()
+
+# =====================================================
+# APP INIT
+# =====================================================
+
+app = FastAPI(title="OCULARA API", version="1.0")
+
+
+# =====================================================
+# CORS
+# =====================================================
 
 origins = [
     "http://localhost:5173",
@@ -25,17 +38,34 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# =====================================================
+# DB INIT
+# =====================================================
+
 Base.metadata.create_all(bind=engine)
+
+
+# =====================================================
+# ROUTERS
+# =====================================================
 
 app.include_router(user.router)
 app.include_router(cabinet.router)
 app.include_router(doctors.router)
 app.include_router(patient.router)
+
 app.include_router(agenda_router)
 app.include_router(gestion_rdv_router)
 app.include_router(secretary.router)
 app.include_router(queue_router)
 
+app.include_router(examen_router)
+
+
+# =====================================================
+# ROOT
+# =====================================================
 
 @app.get("/")
 def root():

@@ -2,7 +2,6 @@ from datetime import date
 import random
 import string
 import uuid
-
 from sqlalchemy.orm import Session
 from app.models import Patient, DossierPatient
 from app.schemas.patient import PatientCreate, PatientUpdate

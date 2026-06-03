@@ -59,6 +59,10 @@ def get_patients_route(
     db: Session = Depends(get_db),
     current_user=Depends(require_cabinet_staff),
 ):
+    # 🔐 sécurité cabinet
+    if cabinet_id != current_user.cabinet_id and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Accès interdit")
+
     return get_patients_by_cabinet(db, cabinet_id, search or "")
 
 
@@ -110,4 +114,3 @@ def delete_patient_route(
     ok = delete_patient(db, patient_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Patient introuvable")
-
