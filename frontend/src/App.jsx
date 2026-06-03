@@ -9,7 +9,7 @@ import Login from "./auth/Login";
 import AdminDashboard from "./dashbord/AdminDashboard";
 import OphthalmologistDashboard from "./dashbord/OphthalmologistDashboard";
 import SecretaireDashboard from "./dashbord/SecretaireDashboard";
-// import OrthoptisteDashboard from "./dashbord/OrthoptisteDashboard";
+import OrthoptistDashboard from "./dashbord/OrthoptistDashboard";
 
 export default function App() {
   return (
@@ -53,14 +53,14 @@ export default function App() {
         />
 
         {/* ── Orthoptiste ───────────────────────────── */}
-        {/* <Route
+        <Route
           path="/orthoptiste"
           element={
             <ProtectedRoute requiredRole="orthoptiste">
-              <OrthoptisteDashboard />
+              <OrthoptistDashboard />
             </ProtectedRoute>
           }
-        /> */}
+        />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />

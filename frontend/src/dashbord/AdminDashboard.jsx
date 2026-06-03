@@ -2,13 +2,14 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CabinetsManager from "./CabinetsManager";
 import OphthalmologistsManager from "./OphthalmologistsManager";
+import ExamensPage from "../components/examens/ExamensPage";
 
 // Les clés restent intactes pour la logique, les icônes sont gérées plus bas avec des SVGs premium
 const NAV_ITEMS = [
   { key: "cabinets", label: "Cabinets Médicaux" },
   { key: "ophtalmologues", label: "Ophtalmologues" },
+  { key: "examens", label: "Examens Médicaux" },
 ];
-
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("cabinets");
   const navigate = useNavigate();
